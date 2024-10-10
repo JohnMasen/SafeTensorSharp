@@ -8,23 +8,10 @@ namespace SafeTensorSharp
 {
 	public class SafeTensor<T> : SafeTensor
 	{
-		public T MetaObject { get; private set; }
-		internal SafeTensor(MemoryMappedFile mf) : base(mf)
+		public T MetaObject { get; internal set; }
+		internal SafeTensor(string path) : base(path)
 		{
 		}
-		protected override void LoadInternal(long fileSize)
-		{
-			base.LoadInternal(fileSize);
-			try
-			{
-				MetaObject = JsonSerializer.Deserialize<T>(MetaData);
-			}
-			catch (Exception ex)
-			{
 
-				throw new InvalidSafeTensorHeaderException($"parse metadata to type {typeof(T)} failed");
-			}
-			
-		}
 	}
 }
