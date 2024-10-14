@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.MemoryMappedFiles;
@@ -36,7 +37,12 @@ namespace SafeTensorSharp
             action(new SafeTensorReadSession(this, mmf));
         }
 
-        
+        public static void WriteToDisk(string path,Action<SafeTensorWriteSession> action,int headerBufferSize=2048)
+        {
+            using var session = new SafeTensorWriteSession(path, headerBufferSize);
+            action(session);
+            session.WriteHeader();
+        }
 
     }
 }

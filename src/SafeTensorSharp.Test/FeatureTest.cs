@@ -85,7 +85,7 @@ namespace SafeTensorSharp.Test
                     switch (item.Key)
                     {
                         case "embedding":
-                            Assert.IsTrue(Enumerable.SequenceEqual(tmp, new byte[16]));
+                            Assert.IsTrue(Enumerable.SequenceEqual(tmp, new byte[16]));//16 bytes(2x2 zero array
                             break;
                         case "attention":
                             Assert.IsTrue(Enumerable.SequenceEqual(tmp, new byte[] { 1, 2, 3, 4, 5, 6 }));
@@ -93,12 +93,34 @@ namespace SafeTensorSharp.Test
                         default:
                             break;
                     }
-
-
                 }
             });
         }
 
+        [TestMethod]
+        public void CanWrite()
+        {
+            string path = Path.Combine(testFilePath, "writeSampel.safetensors");
+            SafeTensor.WriteToDisk(path, session =>
+            {
+                session.Write<byte>("item1",[1, 2, 3, 4], [4], "I8");
+                session.Write<byte>("item2", [1, 2, 3, 4], [4], "I8");
+            });
+            Assert.IsTrue(File.Exists(path));
+        }
+
+        [TestMethod]
+        public void WriteThenRead()
+        {
+            string path = Path.Combine(testFilePath, "WriteThenRead.safetensors");
+            SafeTensor.WriteToDisk(path, session =>
+            {
+                session.Write<byte>("item1", [1, 2, 3, 4], [4], "I8");
+                session.Write<byte>("item2", [1, 2, 3, 4], [4], "I8");
+            });
+            var t = SafeTensor.Load(path);
+            Assert.IsNotNull(t);
+        }
 
 
         public class TestMeta

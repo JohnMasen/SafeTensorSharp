@@ -25,7 +25,9 @@ namespace SafeTensorSharp
             get;
             set;
         }
+        [JsonIgnore]
         public long DataStart => DataOffsets[0];
+        [JsonIgnore]
         public long DataLength => DataOffsets[1]-DataOffsets[0];
     }
 }
