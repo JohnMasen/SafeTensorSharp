@@ -76,7 +76,7 @@ namespace SafeTensorSharp.Test
         public void CanLoadData()
         {
             var s = SafeTensor.Load(Path.Combine(testFilePath, "basic_model.safetensors"));
-            s.ReadToMemory(reader =>
+            s.Read(reader =>
             {
                 foreach (var item in s.Items)
                 {
@@ -101,9 +101,9 @@ namespace SafeTensorSharp.Test
         public void CanWrite()
         {
             string path = Path.Combine(testFilePath, "writeSampel.safetensors");
-            SafeTensor.WriteToDisk(path, session =>
+            SafeTensor.Create(path, session =>
             {
-                session.Write<byte>("item1",[1, 2, 3, 4], [4], "I8");
+                session.Write<byte>("item1", [1, 2, 3, 4], [4], "I8");
                 session.Write<byte>("item2", [1, 2, 3, 4], [4], "I8");
             });
             Assert.IsTrue(File.Exists(path));
@@ -113,15 +113,53 @@ namespace SafeTensorSharp.Test
         public void WriteThenRead()
         {
             string path = Path.Combine(testFilePath, "WriteThenRead.safetensors");
-            SafeTensor.WriteToDisk(path, session =>
+            byte[] data = [1, 2, 3, 4];
+            SafeTensor.Create(path, session =>
             {
-                session.Write<byte>("item1", [1, 2, 3, 4], [4], "I8");
-                session.Write<byte>("item2", [1, 2, 3, 4], [4], "I8");
+                session.Write<byte>("item1", data, [4], "I8");
+                session.Write<byte>("item2", data, [4], "I8");
             });
             var t = SafeTensor.Load(path);
             Assert.IsNotNull(t);
+            Assert.AreEqual(t.Items.Count, 2);
+            byte[] buffer = new byte[4];
+            t.Read(s =>
+            {
+                foreach (var item in t.Items)
+                {
+                    s.ReadToSpan(item.Key, buffer);
+                    Assert.IsTrue(Enumerable.SequenceEqual(buffer, data));
+                }
+            });
         }
 
+        [TestMethod]
+        public void WriteThenReadWithMeta()
+        {
+            string path = Path.Combine(testFilePath, $"{nameof(WriteThenReadWithMeta)}.safetensors");
+            byte[] data = [1, 2, 3, 4];
+            TestMeta meta = new TestMeta() { key1 = "item1", key2 = "item2" };
+
+            SafeTensor.Create(path, session =>
+            {
+                session.MetaObject = meta;
+                session.Write<byte>("item1", data, [4], "I8");
+                session.Write<byte>("item2", data, [4], "I8");
+            });
+            var t = SafeTensor.Load<TestMeta>(path);
+            Assert.IsNotNull(t);
+            Assert.AreEqual(t.Items.Count, 2);
+            Assert.AreEqual(t.MetaObject, meta);
+            byte[] buffer = new byte[4];
+            t.Read(s =>
+            {
+                foreach (var item in t.Items)
+                {
+                    s.ReadToSpan(item.Key, buffer);
+                    Assert.IsTrue(Enumerable.SequenceEqual(buffer, data));
+                }
+            });
+        }
 
         public class TestMeta
         {

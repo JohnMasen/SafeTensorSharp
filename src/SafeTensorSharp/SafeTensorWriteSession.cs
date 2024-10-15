@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SafeTensorSharp
 {
@@ -17,6 +19,7 @@ namespace SafeTensorSharp
         int reservedHeaderLength;
         long dataSize = 0;
         string stageFile;
+        public object  MetaObject { get; set; }
         public SafeTensorWriteSession(string path, int headBufferSize)
         {
             stageFile = $"{path}.stg";
@@ -24,7 +27,6 @@ namespace SafeTensorSharp
             fs = File.Create(stageFile);
             fs.Write(new byte[reservedHeaderLength+8]);
             Items = new List<(string name, HeaderItem item)>();
-
         }
 
         public void Dispose()
@@ -47,13 +49,31 @@ namespace SafeTensorSharp
                 (name,
                 new HeaderItem() {DataType = dataType, DataOffsets = new long[] { dataSize, dataSize + blockSize },Shape=shape }));
             dataSize += blockSize;
-
         }
 
-        internal void WriteHeader()
+
+
+        public ValueTask WriteAsync<T>(string name, Memory<byte> data, int[] shape,string dataType,CancellationToken token=default)
         {
+            var blockSize = data.Length;
+            Items.Add(
+                (name,
+                new HeaderItem() { DataType = dataType, DataOffsets = new long[] { dataSize, dataSize + blockSize }, Shape = shape }));
+            dataSize += blockSize;
+            return fs.WriteAsync(data);
+        }
+
+
+        internal void EndWrite()
+        {
+            //prepare header
             HeaderStub stub = new HeaderStub();
             stub.Items = new Dictionary<string, JsonElement>();
+            if (MetaObject!=null)
+            {
+                stub.Meta = JsonSerializer.SerializeToElement(MetaObject);
+            }
+
             foreach (var item in Items)
             {
                 stub.Items.Add(item.name, JsonSerializer.SerializeToElement(item.item));
@@ -77,6 +97,7 @@ namespace SafeTensorSharp
             }
             else
             {
+                //write file header
                 fs.Seek(0, SeekOrigin.Begin);
                     fs.Write(BitConverter.GetBytes((ulong)reservedHeaderLength));// header length at first 8 bytes
 
