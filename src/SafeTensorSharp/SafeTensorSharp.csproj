@@ -3,8 +3,28 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
-    <AssemblyVersion></AssemblyVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Title>Read and write SafeTensor</Title>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>$(VersionPrefix)0.6.0</Version>
+    <RepositoryType></RepositoryType>
+    <PackageTags>SafeTensor;netstandard 2.1</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath>$(OutputPath)</PackageOutputPath>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Description>Library for read/write safe tensor</Description>
+    <RepositoryUrl>https://github.com/JohnMasen/SafeTensorSharp.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/JohnMasen/SafeTensorSharp</PackageProjectUrl>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
