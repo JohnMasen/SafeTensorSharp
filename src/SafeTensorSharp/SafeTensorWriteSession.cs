@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace SafeTensorSharp
 {
+    /// <summary>
+    /// Represents a safetensor writing session
+    /// </summary>
     public class SafeTensorWriteSession : IDisposable
     {
         FileStream fs;
@@ -19,8 +22,11 @@ namespace SafeTensorSharp
         int reservedHeaderLength;
         long dataSize = 0;
         string stageFile;
+        /// <summary>
+        /// Root element of meta data
+        /// </summary>
         public object  MetaObject { get; set; }
-        public SafeTensorWriteSession(string path, int headBufferSize)
+        internal SafeTensorWriteSession(string path, int headBufferSize)
         {
             stageFile = $"{path}.stg";
             reservedHeaderLength = headBufferSize;
@@ -40,6 +46,14 @@ namespace SafeTensorSharp
             File.Move(stageFile, targetFilePath);
         }
 
+        /// <summary>
+        /// Write a typed span data item
+        /// </summary>
+        /// <typeparam name="T">The type of data item</typeparam>
+        /// <param name="name">Date item name</param>
+        /// <param name="data">Content span</param>
+        /// <param name="shape">Data shape</param>
+        /// <param name="dataType">Data type, possible values are "I8,I16,F16..."</param>
         public void Write<T>(string name, Span<T> data, int[] shape, string dataType) where T : struct
         {
             fs.Write(MemoryMarshal.AsBytes(data));
@@ -52,7 +66,16 @@ namespace SafeTensorSharp
         }
 
 
-
+        /// <summary>
+        /// Asynchronously write a typed span data item
+        /// </summary>
+        /// <typeparam name="T">The type of data item</typeparam>
+        /// <param name="name">Date item name</param>
+        /// <param name="data">Content span</param>
+        /// <param name="shape">Data shape</param>
+        /// <param name="dataType">Data type, possible values are "I8,I16,F16..."</param>
+        /// <param name="token">The token to monitor for cancellation requests. The default value is <see cref="System.Threading.CancellationToken.None"/>.</param>
+        /// <returns></returns>
         public ValueTask WriteAsync<T>(string name, Memory<byte> data, int[] shape,string dataType,CancellationToken token=default)
         {
             var blockSize = data.Length;
@@ -60,7 +83,7 @@ namespace SafeTensorSharp
                 (name,
                 new HeaderItem() { DataType = dataType, DataOffsets = new long[] { dataSize, dataSize + blockSize }, Shape = shape }));
             dataSize += blockSize;
-            return fs.WriteAsync(data);
+            return fs.WriteAsync(data,token);
         }
 
 
